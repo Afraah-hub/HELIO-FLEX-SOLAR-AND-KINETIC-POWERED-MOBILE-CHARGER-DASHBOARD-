@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helio Flex — Dual Charging Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #080b10;
+    --bg2: #0d1117;
+    --bg3: #111720;
+    --solar: #f5a623;
+    --solar-dim: #7a5312;
+    --solar-glow: rgba(245,166,35,0.15);
+    --kinetic: #00d4ff;
+    --kinetic-dim: #0a5a6e;
+    --kinetic-glow: rgba(0,212,255,0.12);
+    --grid: rgba(255,255,255,0.04);
+    --text: #e8edf5;
+    --text-muted: #5a6a80;
+    --text-dim: #2a3545;
+    --accent: #ffffff;
+    --border: rgba(255,255,255,0.06);
+    --border-solar: rgba(245,166,35,0.3);
+    --border-kinetic: rgba(0,212,255,0.25);
+    --red: #ff4757;
+    --green: #2ed573;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2.5rem;
+    height: 60px;
+    background: rgba(8,11,16,0.92);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Orbitron', monospace;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.15em;
+    color: var(--text);
+  }
+
+  .nav-logo-icon {
+    width: 30px; height: 30px;
+    position: relative;
+  }
+
+  .logo-hex {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--solar), var(--kinetic));
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    animation: pulse-logo 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-logo {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--green);
+    letter-spacing: 0.05em;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 2s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    position: relative;
+    z-index: 1;
+    padding-top: 60px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 4rem 2.5rem 3rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .hero-text h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    margin-bottom: 1.2rem;
+  }
+
+  .hero-text h1 span.solar-word { color: var(--solar); }
+  .hero-text h1 span.kinetic-word { color: var(--kinetic); }
+
+  .hero-text p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    max-width: 480px;
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+
+  .hero-badges {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .badge-solar {
+    background: var(--solar-glow);
+    border: 1px solid var(--border-solar);
+    color: var(--solar);
+  }
+
+  .badge-kinetic {
+    background: var(--kinetic-glow);
+    border: 1px solid var(--border-kinetic);
+    color: var(--kinetic);
+  }
+
+  /* POWER ORBS */
+  .hero-orbs {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .orb-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .orb {
+    position: relative;
+    width: 140px;
+    height: 140px;
+  }
+
+  .orb svg {
+    transform: rotate(-90deg);
+    width: 100%; height: 100%;
+  }
+
+  .orb-track { fill: none; stroke: var(--bg3); stroke-width: 8; }
+
+  .orb-solar-fill {
+    fill: none;
+    stroke: var(--solar);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 376;
+    stroke-dashoffset: 376;
+    filter: drop-shadow(0 0 6px var(--solar));
+    animation: fillSolar 2s 0.5s ease-out forwards;
+  }
+
+  @keyframes fillSolar {
+    to { stroke-dashoffset: 94; } /* 75% */
+  }
+
+  .orb-kinetic-fill {
+    fill: none;
+    stroke: var(--kinetic);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 376;
+    stroke-dashoffset: 376;
+    filter: drop-shadow(0 0 6px var(--kinetic));
+    animation: fillKinetic 2s 0.7s ease-out forwards;
+  }
+
+  @keyframes fillKinetic {
+    to { stroke-dashoffset: 188; } /* 50% */
+  }
+
+  .orb-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .orb-pct {
+    font-family: 'Orbitron', monospace;
+    font-weight: 800;
+    font-size: 1.6rem;
+    line-height: 1;
+    display: block;
+  }
+
+  .orb-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 4px;
+  }
+
+  .solar-color { color: var(--solar); }
+  .kinetic-color { color: var(--kinetic); }
+
+  .orb-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .orb-watt {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .orb-divider {
+    width: 1px;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, var(--border), transparent);
+  }
+
+  /* DASHBOARD SECTION */
+  .section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* STAT CARDS ROW */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    padding: 1.2rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .stat-card:hover { background: var(--bg3); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-solar::before { background: var(--solar); }
+  .stat-kinetic::before { background: var(--kinetic); }
+  .stat-total::before { background: linear-gradient(90deg, var(--solar), var(--kinetic)); }
+
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .stat-trend {
+    font-size: 0.65rem;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 0.4rem;
+  }
+
+  .trend-up { color: var(--green); }
+  .trend-dn { color: var(--red); }
+
+  /* CHARTS AREA */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .chart-panel {
+    background: var(--bg2);
+    padding: 1.5rem;
+  }
+
+  .chart-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+  }
+
+  .chart-panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .time-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg);
+    padding: 2px;
+    border: 1px solid var(--border);
+  }
+
+  .time-tab {
+    padding: 0.3rem 0.7rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+
+  .time-tab.active {
+    background: var(--bg3);
+    color: var(--text);
+  }
+
+  .chart-canvas-wrap {
+    position: relative;
+    height: 220px;
+  }
+
+  /* BOTTOM ROW */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+
+  /* TECH INFO SECTIONS */
+  .info-section {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .info-panel {
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .info-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+  }
+
+  .info-solar {
+    border-right: 1px solid var(--border);
+  }
+
+  .info-solar::before {
+    background: radial-gradient(circle at 0% 50%, var(--solar), transparent 70%);
+    opacity: 0.15;
+  }
+
+  .info-kinetic::before {
+    background: radial-gradient(circle at 100% 50%, var(--kinetic), transparent 70%);
+    opacity: 0.1;
+  }
+
+  .info-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    display: block;
+  }
+
+  .info-panel h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+  }
+
+  .info-panel p {
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+  }
+
+  .info-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .info-stat {
+    padding: 0.8rem 1rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+  }
+
+  .info-stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .info-stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* SPECS SECTION */
+  .specs-section {
+    border-top: 1px solid var(--border);
+  }
+
+  .specs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .specs-table th {
+    text-align: left;
+    padding: 1rem 1.5rem;
+    background: var(--bg3);
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .specs-table td {
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .specs-table tr:hover td { background: var(--bg2); }
+
+  .spec-name { color: var(--text-muted); }
+  .spec-val { color: var(--text); font-weight: 600; }
+  .spec-source { font-size: 0.65rem; }
+
+  /* EFFICIENCY BAR */
+  .eff-bar-wrap {
+    margin-top: 1rem;
+  }
+
+  .eff-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .eff-bar-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    width: 100px;
+    flex-shrink: 0;
+  }
+
+  .eff-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg3);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .eff-bar-fill {
+    height: 100%;
+    border-radius: 1px;
+    animation: growBar 1.5s ease-out forwards;
+    width: 0;
+  }
+
+  @keyframes growBar {
+    to { width: var(--target-width); }
+  }
+
+  .eff-bar-pct {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: 40px;
+    text-align: right;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.15em;
+  }
+
+  .footer-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  /* LIVE FEED */
+  .live-feed {
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .feed-item {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    display: flex;
+    gap: 0.8rem;
+    align-items: baseline;
+  }
+
+  .feed-time { color: var(--text-dim); flex-shrink: 0; }
+  .feed-msg { color: var(--text-muted); }
+  .feed-val { margin-left: auto; flex-shrink: 0; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-orbs { justify-content: flex-start; }
+    .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+    .info-solar { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    nav { padding: 0 1rem; }
+    .nav-links { display: none; }
+    .hero, .section { padding: 1.5rem 1rem; }
+  }
+
+  /* Animated scan line */
+  .scan-line {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--solar-glow), transparent);
+    animation: scan 8s linear infinite;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  @keyframes scan {
+    0% { top: 60px; opacity: 0; }
+    2% { opacity: 1; }
+    98% { opacity: 1; }
+    100% { top: 100vh; opacity: 0; }
+  }
+
+  .ticker {
+    display: flex;
+    gap: 0;
+    overflow: hidden;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    height: 32px;
+  }
+
+  .ticker-label {
+    padding: 0 1rem;
+    background: var(--solar);
+    color: var(--bg);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .ticker-inner {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-content {
+    position: absolute;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    animation: ticker 30s linear infinite;
+  }
+
+  .ticker-item {
+    margin-right: 3rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ticker-item span { color: var(--text); font-weight: 600; }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<div class="scan-line"></div>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon"><div class="logo-hex"></div></div>
+    HELIO FLEX
+  </div>
+  <ul class="nav-links">
+    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="#analytics">Analytics</a></li>
+    <li><a href="#technology">Technology</a></li>
+    <li><a href="#specifications">Specs</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    LIVE · 14:23:07
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker" style="margin-top:60px;">
+  <div class="ticker-label">⚡ LIVE</div>
+  <div class="ticker-inner">
+    <div class="ticker-content" id="ticker">
+      <div class="ticker-item">☀ SOLAR INPUT <span>4.7W</span></div>
+      <div class="ticker-item">⚡ KINETIC INPUT <span>2.1W</span></div>
+      <div class="ticker-item">🔋 BATTERY <span>73%</span></div>
+      <div class="ticker-item">⏱ EST. FULL CHARGE <span>1h 42m</span></div>
+      <div class="ticker-item">📊 EFFICIENCY <span>89.3%</span></div>
+      <div class="ticker-item">⚡ TOTAL TODAY <span>47.8 Wh</span></div>
+      <div class="ticker-item">🌡 PANEL TEMP <span>42°C</span></div>
+      <div class="ticker-item">💨 WIND EQUIV <span>3.2 BFT</span></div>
+      <!-- Duplicate for seamless loop -->
+      <div class="ticker-item">☀ SOLAR INPUT <span>4.7W</span></div>
+      <div class="ticker-item">⚡ KINETIC INPUT <span>2.1W</span></div>
+      <div class="ticker-item">🔋 BATTERY <span>73%</span></div>
+      <div class="ticker-item">⏱ EST. FULL CHARGE <span>1h 42m</span></div>
+      <div class="ticker-item">📊 EFFICIENCY <span>89.3%</span></div>
+      <div class="ticker-item">⚡ TOTAL TODAY <span>47.8 Wh</span></div>
+      <div class="ticker-item">🌡 PANEL TEMP <span>42°C</span></div>
+      <div class="ticker-item">💨 WIND EQUIV <span>3.2 BFT</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="dashboard">
+  <div class="hero-text">
+    <h1>HELIO-FLEX<br><span class="solar-word">SOLAR</span> &amp;<br><span class="kinetic-word">KINETIC</span><br>POWER MOBILE CHARGER</h1>
+    <p>Real-time intelligence for your hybrid energy ecosystem. Monitor, analyze, and optimize both charging streams from one unified command center.</p>
+    <div class="hero-badges">
+      <span class="badge badge-solar">☀ Photovoltaic</span>
+      <span class="badge badge-kinetic">⚡ Electromagnetic Induction</span>
+    </div>
+  </div>
+  <div class="hero-orbs">
+    <div class="orb-container">
+      <div class="orb">
+        <svg viewBox="0 0 140 140">
+          <circle class="orb-track" cx="70" cy="70" r="60"/>
+          <circle class="orb-solar-fill" cx="70" cy="70" r="60"/>
+        </svg>
+        <div class="orb-center">
+          <span class="orb-pct solar-color" id="solar-pct">75%</span>
+          <span class="orb-label">SOLAR</span>
+        </div>
+      </div>
+      <div class="orb-name solar-color">PHOTOVOLTAIC</div>
+      <div class="orb-watt solar-color" id="solar-watt">4.7W / 940mA</div>
+    </div>
+    <div class="orb-divider"></div>
+    <div class="orb-container">
+      <div class="orb">
+        <svg viewBox="0 0 140 140">
+          <circle class="orb-track" cx="70" cy="70" r="60"/>
+          <circle class="orb-kinetic-fill" cx="70" cy="70" r="60"/>
+        </svg>
+        <div class="orb-center">
+          <span class="orb-pct kinetic-color" id="kinetic-pct">50%</span>
+          <span class="orb-label">KINETIC</span>
+        </div>
+      </div>
+      <div class="orb-name kinetic-color">EM INDUCTION</div>
+      <div class="orb-watt kinetic-color" id="kinetic-watt">2.1W / 420mA</div>
+    </div>
+  </div>
+</section>
+
+<!-- STAT CARDS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-title">// REAL-TIME METRICS</span>
+    <div class="section-line"></div>
+    <span class="section-title" id="clock-display">14:23:07 UTC</span>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card stat-solar">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--solar)"></span>
+        Solar Output
+      </div>
+      <div class="stat-value solar-color" id="s-watts">4.7W</div>
+      <div class="stat-sub">940 mA @ 5V</div>
+      <div class="stat-trend trend-up">↑ +0.3W vs 1hr ago</div>
+    </div>
+    <div class="stat-card stat-kinetic">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--kinetic)"></span>
+        Kinetic Output
+      </div>
+      <div class="stat-value kinetic-color" id="k-watts">2.1W</div>
+      <div class="stat-sub">420 mA @ 5V</div>
+      <div class="stat-trend trend-dn">↓ -0.1W vs 1hr ago</div>
+    </div>
+    <div class="stat-card stat-total">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:linear-gradient(90deg,var(--solar),var(--kinetic));width:10px;border-radius:2px;height:5px;"></span>
+        Total Power
+      </div>
+      <div class="stat-value" id="total-watts">6.8W</div>
+      <div class="stat-sub">Combined output</div>
+      <div class="stat-trend trend-up">↑ Peak today: 8.4W</div>
+    </div>
+    <div class="stat-card stat-solar">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--solar)"></span>
+        Solar Today
+      </div>
+      <div class="stat-value solar-color">32.4 Wh</div>
+      <div class="stat-sub">Watt-hours generated</div>
+      <div class="stat-trend trend-up">↑ 12% vs yesterday</div>
+    </div>
+    <div class="stat-card stat-kinetic">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--kinetic)"></span>
+        Kinetic Today
+      </div>
+      <div class="stat-value kinetic-color">15.4 Wh</div>
+      <div class="stat-sub">Watt-hours generated</div>
+      <div class="stat-trend trend-up">↑ 8% vs yesterday</div>
+    </div>
+    <div class="stat-card stat-total">
+      <div class="stat-label">
+        <span class="stat-dot" style="background:var(--green)"></span>
+        Est. Full Charge
+      </div>
+      <div class="stat-value" style="color:var(--green)" id="eta">1h 42m</div>
+      <div class="stat-sub">At current rate</div>
+      <div class="stat-trend">Battery: 73% charged</div>
+    </div>
+  </div>
+
+  <!-- MAIN CHARTS -->
+  <div id="analytics" class="charts-grid">
+    <div class="chart-panel">
+      <div class="chart-panel-header">
+        <span class="chart-panel-title">Power Output — Trend</span>
+        <div class="time-tabs">
+          <button class="time-tab active" onclick="setTimeRange('hourly',this)">Hourly</button>
+          <button class="time-tab" onclick="setTimeRange('daily',this)">Daily</button>
+          <button class="time-tab" onclick="setTimeRange('weekly',this)">Weekly</button>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-header">
+        <span class="chart-panel-title">Energy Split</span>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM CHARTS -->
+  <div class="bottom-grid">
+    <div class="chart-panel">
+      <div class="chart-panel-header">
+        <span class="chart-panel-title">Daily Energy (Wh)</span>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-header">
+        <span class="chart-panel-title">Charging Efficiency</span>
+      </div>
+      <div class="eff-bar-wrap">
+        <div class="eff-bar-row">
+          <div class="eff-bar-label">Solar Panel</div>
+          <div class="eff-bar-track"><div class="eff-bar-fill" style="background:var(--solar);--target-width:89%"></div></div>
+          <div class="eff-bar-pct solar-color">89%</div>
+        </div>
+        <div class="eff-bar-row">
+          <div class="eff-bar-label">Kinetic Core</div>
+          <div class="eff-bar-track"><div class="eff-bar-fill" style="background:var(--kinetic);--target-width:74%"></div></div>
+          <div class="eff-bar-pct kinetic-color">74%</div>
+        </div>
+        <div class="eff-bar-row">
+          <div class="eff-bar-label">Combined</div>
+          <div class="eff-bar-track"><div class="eff-bar-fill" style="background:linear-gradient(90deg,var(--solar),var(--kinetic));--target-width:83%"></div></div>
+          <div class="eff-bar-pct">83%</div>
+        </div>
+        <div class="eff-bar-row" style="margin-top:1.5rem">
+          <div class="eff-bar-label">Conversion</div>
+          <div class="eff-bar-track"><div class="eff-bar-fill" style="background:var(--green);--target-width:92%"></div></div>
+          <div class="eff-bar-pct" style="color:var(--green)">92%</div>
+        </div>
+        <div class="eff-bar-row">
+          <div class="eff-bar-label">Thermal Loss</div>
+          <div class="eff-bar-track"><div class="eff-bar-fill" style="background:var(--red);--target-width:8%"></div></div>
+          <div class="eff-bar-pct" style="color:var(--red)">8%</div>
+        </div>
+        <div class="eff-bar-row">
+          <div class="eff-bar-label">Retention</div>
+          <div class="eff-bar-track"><div class="eff-bar-fill" style="background:var(--green);--target-width:97%"></div></div>
+          <div class="eff-bar-pct" style="color:var(--green)">97%</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-header">
+        <span class="chart-panel-title">Event Log</span>
+      </div>
+      <div class="live-feed" id="feed"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TECH INFO -->
+<section class="info-section" id="technology">
+  <div class="info-grid">
+    <div class="info-panel info-solar">
+      <span class="info-icon">☀</span>
+      <h2 class="solar-color">PHOTOVOLTAIC CHARGING</h2>
+      <p>Helio Flex embeds high-efficiency monocrystalline silicon cells across its flexible surface area. Photons excite electrons in the semiconductor lattice, generating direct current through the photovoltaic effect. The integrated MPPT controller optimizes power extraction across varying light conditions, from direct sunlight to diffuse indoor illumination.</p>
+      <p>Panel output scales with light intensity and angle of incidence. Built-in adaptive tracking algorithms maximize energy capture by dynamically adjusting the charging profile to match available irradiance, sustaining useful charging even under 5% full sun.</p>
+      <div class="info-stats">
+        <div class="info-stat">
+          <div class="info-stat-value solar-color">22.4%</div>
+          <div class="info-stat-label">Cell Efficiency</div>
+        </div>
+        <div class="info-stat">
+          <div class="info-stat-value solar-color">5.5W</div>
+          <div class="info-stat-label">Peak Output</div>
+        </div>
+        <div class="info-stat">
+          <div class="info-stat-value solar-color">MPPT</div>
+          <div class="info-stat-label">Tracking</div>
+        </div>
+        <div class="info-stat">
+          <div class="info-stat-value solar-color">10k lux</div>
+          <div class="info-stat-label">Min. for Full</div>
+        </div>
+      </div>
+    </div>
+    <div class="info-panel info-kinetic">
+      <span class="info-icon">⚡</span>
+      <h2 class="kinetic-color">ELECTROMAGNETIC INDUCTION</h2>
+      <p>The kinetic core uses Faraday's law of electromagnetic induction: a precision-engineered array of neodymium magnets oscillates through copper coil windings in response to mechanical movement. Any motion — walking, cycling, even the natural vibration of a bag — induces a fluctuating magnetic flux, driving alternating current in the coils.</p>
+      <p>An onboard full-wave bridge rectifier converts AC to regulated DC. The system operates across a wide frequency range (0.5–15 Hz), making it effective for low-frequency walking gaits as well as higher-frequency mechanical vibration, capturing useful power from virtually any kinetic source.</p>
+      <div class="info-stats">
+        <div class="info-stat">
+          <div class="info-stat-value kinetic-color">3.0W</div>
+          <div class="info-stat-label">Peak Output</div>
+        </div>
+        <div class="info-stat">
+          <div class="info-stat-value kinetic-color">0.5Hz</div>
+          <div class="info-stat-label">Min. Frequency</div>
+        </div>
+        <div class="info-stat">
+          <div class="info-stat-value kinetic-color">N52</div>
+          <div class="info-stat-label">Magnet Grade</div>
+        </div>
+        <div class="info-stat">
+          <div class="info-stat-value kinetic-color">74%</div>
+          <div class="info-stat-label">Efficiency</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPECIFICATIONS -->
+<section class="specs-section section" id="specifications">
+  <div class="section-header">
+    <span class="section-title">// Technical Specifications</span>
+    <div class="section-line"></div>
+  </div>
+  <table class="specs-table">
+    <thead>
+      <tr>
+        <th>Parameter</th>
+        <th>Solar (Photovoltaic)</th>
+        <th>Kinetic (EM Induction)</th>
+        <th>Combined</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="spec-name">Peak Power Output</td>
+        <td class="spec-val solar-color">5.5W</td>
+        <td class="spec-val kinetic-color">3.0W</td>
+        <td class="spec-val">8.5W</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Output Voltage</td>
+        <td class="spec-val solar-color">5V DC (regulated)</td>
+        <td class="spec-val kinetic-color">5V DC (rectified)</td>
+        <td class="spec-val">5V / 9V / 12V USB-PD</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Max Current</td>
+        <td class="spec-val solar-color">1,100 mA</td>
+        <td class="spec-val kinetic-color">600 mA</td>
+        <td class="spec-val">3,000 mA</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Conversion Efficiency</td>
+        <td class="spec-val solar-color">89%</td>
+        <td class="spec-val kinetic-color">74%</td>
+        <td class="spec-val">83% avg</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Battery Capacity</td>
+        <td colspan="2" style="text-align:center" class="spec-name">26,800 mAh / 96.5 Wh (shared)</td>
+        <td class="spec-val">Li-Po, Grade A</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Operating Temp</td>
+        <td class="spec-val solar-color">-10°C to 60°C</td>
+        <td class="spec-val kinetic-color">-20°C to 55°C</td>
+        <td class="spec-val">-10°C to 55°C</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Full Charge Time</td>
+        <td class="spec-val solar-color">~4.5h (direct sun)</td>
+        <td class="spec-val kinetic-color">~9h (active use)</td>
+        <td class="spec-val">~2.8h (combined)</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Weight</td>
+        <td colspan="2" style="text-align:center" class="spec-name">—</td>
+        <td class="spec-val">312g</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Ports</td>
+        <td colspan="2" style="text-align:center" class="spec-name">—</td>
+        <td class="spec-val">2× USB-A, 1× USB-C PD, 1× Micro-USB in</td>
+      </tr>
+      <tr>
+        <td class="spec-name">Protection</td>
+        <td colspan="2" style="text-align:center" class="spec-name">—</td>
+        <td class="spec-val">IP54, OC / OV / OT / Short-Circuit</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <div class="footer-logo">HELIO FLEX</div>
+  <div class="footer-text">Dual-source hybrid charging intelligence · Data refreshes every 5s · WebSocket API v2.1</div>
+  <div class="footer-text" style="color:var(--green)">⬤ All systems nominal</div>
+</footer>
+
+<script>
+// ============================================================
+// SIMULATED REAL-TIME DATA ENGINE
+// In production: replace with WebSocket connection
+// ws://your-device-api/helio-flex/live
+// ============================================================
+const DataEngine = {
+  solar: 4.7,
+  kinetic: 2.1,
+  battery: 73,
+  listeners: [],
+
+  tick() {
+    // Simulate natural fluctuation
+    this.solar = Math.max(0.1, Math.min(5.5, this.solar + (Math.random()-0.48)*0.3));
+    this.kinetic = Math.max(0.1, Math.min(3.0, this.kinetic + (Math.random()-0.5)*0.2));
+    this.battery = Math.min(100, this.battery + 0.04);
+    this.listeners.forEach(fn => fn(this));
+  },
+
+  subscribe(fn) { this.listeners.push(fn); },
+
+  start() { setInterval(() => this.tick(), 3000); }
+};
+
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  const t = now.toTimeString().split(' ')[0] + ' UTC';
+  document.getElementById('clock-display').textContent = '// ' + t;
+  document.querySelector('.nav-status').innerHTML = `<div class="status-dot"></div>LIVE · ${now.toTimeString().split(' ')[0]}`;
+}
+setInterval(updateClock, 1000);
+
+// ============================================================
+// LIVE METRICS UPDATE
+// ============================================================
+DataEngine.subscribe(data => {
+  const total = data.solar + data.kinetic;
+  document.getElementById('s-watts').textContent = data.solar.toFixed(1) + 'W';
+  document.getElementById('k-watts').textContent = data.kinetic.toFixed(1) + 'W';
+  document.getElementById('total-watts').textContent = total.toFixed(1) + 'W';
+
+  const solarMa = Math.round(data.solar / 5 * 1000);
+  const kineticMa = Math.round(data.kinetic / 5 * 1000);
+  document.getElementById('solar-watt').textContent = `${data.solar.toFixed(1)}W / ${solarMa}mA`;
+  document.getElementById('kinetic-watt').textContent = `${data.kinetic.toFixed(1)}W / ${kineticMa}mA`;
+
+  const solarPct = Math.round(data.solar / 5.5 * 100);
+  const kineticPct = Math.round(data.kinetic / 3.0 * 100);
+  document.getElementById('solar-pct').textContent = solarPct + '%';
+  document.getElementById('kinetic-pct').textContent = kineticPct + '%';
+
+  const remaining = (100 - data.battery) * 0.9665 / total;
+  const hrs = Math.floor(remaining);
+  const mins = Math.round((remaining - hrs) * 60);
+  document.getElementById('eta').textContent = `${hrs}h ${mins}m`;
+
+  // Update pie
+  pieChart.data.datasets[0].data = [data.solar, data.kinetic];
+  pieChart.update('none');
+
+  // Update line chart live point
+  const ds = lineChart.data.datasets;
+  ds[0].data[ds[0].data.length-1] = data.solar;
+  ds[1].data[ds[1].data.length-1] = data.kinetic;
+  lineChart.update('none');
+
+  // Feed log
+  addFeedItem(data);
+});
+
+// ============================================================
+// CHART: LINE (Trend)
+// ============================================================
+const hourlyLabels = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','NOW'];
+const dailyLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const weeklyLabels = ['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6','Wk7','Wk8'];
+
+const datasets = {
+  hourly: {
+    solar:   [1.2, 2.8, 4.1, 4.9, 5.2, 4.7, 4.6, 4.7],
+    kinetic: [0.8, 1.0, 1.5, 2.2, 2.4, 2.0, 2.1, 2.1],
+  },
+  daily: {
+    solar:   [28.4, 31.2, 19.8, 35.1, 42.7, 38.9, 32.4],
+    kinetic: [12.1, 14.8, 10.2, 15.9, 18.3, 16.7, 15.4],
+  },
+  weekly: {
+    solar:   [180, 210, 155, 240, 265, 230, 198, 220],
+    kinetic: [82, 95, 71, 108, 120, 101, 89, 95],
+  }
+};
+
+const lineCtx = document.getElementById('lineChart').getContext('2d');
+const lineChart = new Chart(lineCtx, {
+  type: 'line',
+  data: {
+    labels: hourlyLabels,
+    datasets: [
+      {
+        label: 'Solar (W)',
+        data: [...datasets.hourly.solar],
+        borderColor: '#f5a623',
+        backgroundColor: 'rgba(245,166,35,0.08)',
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#f5a623',
+        fill: true,
+      },
+      {
+        label: 'Kinetic (W)',
+        data: [...datasets.hourly.kinetic],
+        borderColor: '#00d4ff',
+        backgroundColor: 'rgba(0,212,255,0.06)',
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#00d4ff',
+        fill: true,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        labels: {
+          color: '#5a6a80',
+          font: { family: 'IBM Plex Mono', size: 10 },
+          boxWidth: 12,
+        }
+      },
+      tooltip: {
+        backgroundColor: '#0d1117',
+        borderColor: '#1e2a3a',
+        borderWidth: 1,
+        titleColor: '#e8edf5',
+        bodyColor: '#5a6a80',
+        titleFont: { family: 'IBM Plex Mono', size: 10 },
+        bodyFont: { family: 'IBM Plex Mono', size: 10 },
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#5a6a80', font: { family: 'IBM Plex Mono', size: 9 } }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#5a6a80', font: { family: 'IBM Plex Mono', size: 9 } }
+      }
+    }
+  }
+});
+
+function setTimeRange(range, btn) {
+  document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = { hourly: hourlyLabels, daily: dailyLabels, weekly: weeklyLabels };
+  const suffix = { hourly: 'W', daily: 'Wh', weekly: 'Wh' };
+  lineChart.data.labels = labels[range];
+  lineChart.data.datasets[0].data = [...datasets[range].solar];
+  lineChart.data.datasets[1].data = [...datasets[range].kinetic];
+  lineChart.data.datasets[0].label = `Solar (${suffix[range]})`;
+  lineChart.data.datasets[1].label = `Kinetic (${suffix[range]})`;
+  lineChart.update();
+}
+
+// ============================================================
+// CHART: PIE (Energy Split)
+// ============================================================
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+const pieChart = new Chart(pieCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Solar', 'Kinetic'],
+    datasets: [{
+      data: [4.7, 2.1],
+      backgroundColor: ['rgba(245,166,35,0.85)', 'rgba(0,212,255,0.75)'],
+      borderColor: ['#f5a623', '#00d4ff'],
+      borderWidth: 1.5,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#5a6a80',
+          font: { family: 'IBM Plex Mono', size: 10 },
+          boxWidth: 12, padding: 16,
+        }
+      },
+      tooltip: {
+        backgroundColor: '#0d1117',
+        borderColor: '#1e2a3a',
+        borderWidth: 1,
+        callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(1)}W (${Math.round(ctx.parsed/(4.7+2.1)*100)}%)`
+        },
+        titleFont: { family: 'IBM Plex Mono', size: 10 },
+        bodyFont: { family: 'IBM Plex Mono', size: 10 },
+        titleColor: '#e8edf5',
+        bodyColor: '#5a6a80',
+      }
+    }
+  }
+});
+
+// ============================================================
+// CHART: BAR (Daily Wh)
+// ============================================================
+const barCtx = document.getElementById('barChart').getContext('2d');
+const barChart = new Chart(barCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    datasets: [
+      {
+        label: 'Solar (Wh)',
+        data: [28.4, 31.2, 19.8, 35.1, 42.7, 38.9, 32.4],
+        backgroundColor: 'rgba(245,166,35,0.7)',
+        borderColor: '#f5a623',
+        borderWidth: 1,
+        borderRadius: 2,
+      },
+      {
+        label: 'Kinetic (Wh)',
+        data: [12.1, 14.8, 10.2, 15.9, 18.3, 16.7, 15.4],
+        backgroundColor: 'rgba(0,212,255,0.6)',
+        borderColor: '#00d4ff',
+        borderWidth: 1,
+        borderRadius: 2,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#5a6a80',
+          font: { family: 'IBM Plex Mono', size: 10 },
+          boxWidth: 12,
+        }
+      },
+      tooltip: {
+        backgroundColor: '#0d1117',
+        borderColor: '#1e2a3a',
+        borderWidth: 1,
+        titleColor: '#e8edf5',
+        bodyColor: '#5a6a80',
+        titleFont: { family: 'IBM Plex Mono', size: 10 },
+        bodyFont: { family: 'IBM Plex Mono', size: 10 },
+      }
+    },
+    scales: {
+      x: {
+        stacked: false,
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#5a6a80', font: { family: 'IBM Plex Mono', size: 9 } }
+      },
+      y: {
+        stacked: false,
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#5a6a80', font: { family: 'IBM Plex Mono', size: 9 } }
+      }
+    }
+  }
+});
+
+// ============================================================
+// LIVE EVENT FEED
+// ============================================================
+const events = [
+  { msg: 'Solar charging optimized — MPPT lock', val: '4.7W', color: 'var(--solar)' },
+  { msg: 'Kinetic threshold reached', val: '2.1W', color: 'var(--kinetic)' },
+  { msg: 'Battery protection — temp normal', val: '42°C', color: 'var(--green)' },
+  { msg: 'USB-C PD handshake', val: '12V/1.5A', color: 'var(--text)' },
+  { msg: 'Panel efficiency nominal', val: '89.3%', color: 'var(--solar)' },
+  { msg: 'Vibration burst detected', val: '+0.4W', color: 'var(--kinetic)' },
+  { msg: 'Low light mode activated', val: '800lux', color: 'var(--solar)' },
+];
+
+let feedIdx = 0;
+function addFeedItem(data) {
+  const feed = document.getElementById('feed');
+  const e = events[feedIdx % events.length];
+  feedIdx++;
+  const now = new Date();
+  const t = now.toTimeString().split(' ')[0];
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.innerHTML = `
+    <span class="feed-time">${t}</span>
+    <span class="feed-msg">${e.msg}</span>
+    <span class="feed-val" style="color:${e.color}">${e.val}</span>
+  `;
+  feed.insertBefore(item, feed.firstChild);
+  while (feed.children.length > 8) feed.removeChild(feed.lastChild);
+}
+
+// Seed initial feed
+for (let i = 0; i < 6; i++) addFeedItem({});
+
+// ============================================================
+// START ENGINE
+// ============================================================
+DataEngine.start();
+updateClock();
+
+// ============================================================
+// SAMPLE WEBSOCKET INTEGRATION (commented — production use)
+// ============================================================
+
+const ws = new WebSocket('wss://api.helioflex.io/v2/live');
+
+ws.onopen = () => console.log('Helio Flex WebSocket connected');
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  // data shape:
+  // {
+  //   solar: { watts: 4.7, mA: 940, efficiency: 0.89, tempC: 42 },
+  //   kinetic: { watts: 2.1, mA: 420, efficiency: 0.74, hz: 1.8 },
+  //   battery: { pct: 73, mAh: 19564, etaMinutes: 102 },
+  //   timestamp: "2026-02-25T14:23:07Z"
+  // }
+  DataEngine.solar = data.solar.watts;
+  DataEngine.kinetic = data.kinetic.watts;
+  DataEngine.battery = data.battery.pct;
+  DataEngine.listeners.forEach(fn => fn(DataEngine));
+};
+
+ws.onclose = () => setTimeout(() => reconnectWS(), 3000);
+
+// REST API fallback (poll every 5s)
+async function pollAPI() {
+  const resp = await fetch('https://api.helioflex.io/v2/snapshot');
+  const data = await resp.json();
+  DataEngine.solar = data.solar.watts;
+  DataEngine.kinetic = data.kinetic.watts;
+  DataEngine.listeners.forEach(fn => fn(DataEngine));
+}
+setInterval(pollAPI, 5000);
+
+</script>
+</body>
+</html>
